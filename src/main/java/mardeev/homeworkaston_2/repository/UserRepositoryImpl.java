@@ -10,29 +10,37 @@ import java.util.Optional;
 
 @Repository
 @AllArgsConstructor
-public class UserRepositoryImpl implements UserRepository{
+public class UserRepositoryImpl implements UserRepository {
     private MyDataBase dataBase;
 
 
     @Override
     public Optional<User> findByName(String name) {
-        dataBase.hashCode();
+        for (User user : dataBase.getUserList()) {
+            if (user.getName().equals(name)) {
+                return Optional.of(user);
+            }
+        }
         return Optional.empty();
     }
 
     @Override
     public boolean save(User user) {
-        return false;
+        return dataBase.getUserList().add(user);
     }
 
     @Override
     public boolean updateUser(String name, String passwordNew) {
+        Optional<User> optionalUser = findByName(name);
+        if (dataBase.getUserList().remove(optionalUser.get())) {
+            return dataBase.getUserList().add(new User(name, passwordNew));
+        }
         return false;
     }
 
 
     @Override
     public List<User> getUsers() {
-        return null;
+        return dataBase.getUserList();
     }
 }

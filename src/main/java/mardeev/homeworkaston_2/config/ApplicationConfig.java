@@ -26,5 +26,4 @@ public class ApplicationConfig {
     public Logger logger() {
         return Logger.getLogger(getClass().getName());
     }
-
 }

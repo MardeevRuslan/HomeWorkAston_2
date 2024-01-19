@@ -12,10 +12,4 @@ import java.util.List;
 public class MyDataBaseImpl implements MyDataBase {
     private final List<User> userList = new ArrayList<>();
 
-    public List<User> getUserList() {
-        return userList;
-    }
-    public int hashCode() {
-        return 1;
-    }
 }

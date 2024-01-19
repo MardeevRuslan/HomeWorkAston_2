@@ -12,6 +12,6 @@ public class ApplicationImpl implements Application {
     private UserController userController;
     @Override
     public void run() {
-        System.out.println("aaaaa");
+
     }
 }
