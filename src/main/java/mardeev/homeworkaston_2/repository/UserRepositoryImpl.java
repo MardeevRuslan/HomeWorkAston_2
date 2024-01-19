@@ -32,7 +32,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public boolean updateUser(String name, String passwordNew) {
         Optional<User> optionalUser = findByName(name);
-        if (dataBase.getUserList().remove(optionalUser.get())) {
+        if (optionalUser.isPresent() && dataBase.getUserList().remove(optionalUser.get())) {
             return dataBase.getUserList().add(new User(name, passwordNew));
         }
         return false;

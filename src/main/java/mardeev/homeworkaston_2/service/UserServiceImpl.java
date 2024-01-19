@@ -1,23 +1,25 @@
 package mardeev.homeworkaston_2.service;
 
+import lombok.AllArgsConstructor;
 import mardeev.homeworkaston_2.entity.User;
-
 import mardeev.homeworkaston_2.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 @Service
-public class UserServiceImpl implements UserService{
+@AllArgsConstructor
+public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
+
     @Override
     public boolean signUp(String name, String password) {
         Optional<User> user = userRepository.findByName(name);
         if (user.isPresent()) {
-           return false;
+            return false;
         }
-        return userRepository.save(user.get());
+        return userRepository.save(new User(name, password));
     }
 
     @Override
@@ -40,6 +42,6 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public List<User> getUsers() {
-        return  userRepository.getUsers();
+        return userRepository.getUsers();
     }
 }

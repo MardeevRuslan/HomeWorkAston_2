@@ -14,5 +14,5 @@ public interface UserRepository {
 
     boolean updateUser(String name, String passwordNew);
 
-     List<User> getUsers();
+    List<User> getUsers();
 }
