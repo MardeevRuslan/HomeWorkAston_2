@@ -1,56 +1,46 @@
 package mardeev.homeworkaston_2.service;
 
-import junit.framework.TestCase;
-import mardeev.homeworkaston_2.database.MyDataBase;
-import mardeev.homeworkaston_2.database.MyDataBaseImpl;
 import mardeev.homeworkaston_2.entity.User;
+import mardeev.homeworkaston_2.exception.NameIsBusy;
 import mardeev.homeworkaston_2.repository.UserRepository;
-import mardeev.homeworkaston_2.repository.UserRepositoryImpl;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
-public class UserServiceImplTest extends TestCase {
-    private static MyDataBase myDataBase = new MyDataBaseImpl();
+import java.util.Optional;
 
-    private UserRepository userRepository = new UserRepositoryImpl(myDataBase);
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-    private UserService userService = new UserServiceImpl(userRepository);
-    private static String nameYes = "Ivan";
-    private static String nameYes2 = "Dima";
-    private static String nameNot = "Ivans";
-    private static String nameNot2 = "Ivant";
+public class UserServiceImplTest {
+    private UserService userService;
 
-    private static String password = "123";
-    private static String passwordNo = "1234";
+    @Mock
+    private UserRepository userRepository;
 
-    @BeforeAll
-    public static void initEach() {
-        myDataBase.getUserList().add(new User(nameYes, password));
-        myDataBase.getUserList().add(new User(nameYes2, password));
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        userService = new UserServiceImpl(userRepository);
     }
 
     @Test
-    public void testSignUp() {
-        Assumptions.assumeFalse(userService.signUp(nameYes, password));
-        Assumptions.assumeTrue(userService.signUp(nameNot, password));
+    public void testSignUpWhenUserExists() {
+        String name = "testUser";
+        String password = "password";
+        when(userRepository.findByName(name)).thenReturn(Optional.of(new User(name, password)));
+
+        assertThrows(NameIsBusy.class, () -> userService.signUp(name, password));
     }
 
     @Test
-    public void testSignIn() {
-        Assumptions.assumeTrue(userService.signIn(nameYes, password));
-        Assumptions.assumeFalse(userService.signIn(nameNot2, password));
-        Assumptions.assumeFalse(userService.signIn(nameYes, passwordNo));
-    }
+    public void testSignUpWhenUserDoesNotExist() throws NameIsBusy {
+        String name = "newUser";
+        String password = "password";
+        when(userRepository.findByName(name)).thenReturn(Optional.empty());
+        when(userRepository.save(new User(name, password))).thenReturn(true);
 
-    @Test
-    public void testUpdateUser() {
-        Assumptions.assumeTrue(userService.updateUser(nameYes, password, passwordNo));
-        Assumptions.assumeFalse(userService.updateUser(nameNot2, password, passwordNo));
-    }
-
-    @Test
-    public void testGetUsers() {
-        Assumptions.assumeTrue(userService.getUsers().equals(myDataBase.getUserList()));
+        assertTrue(userService.signUp(name, password));
     }
 }

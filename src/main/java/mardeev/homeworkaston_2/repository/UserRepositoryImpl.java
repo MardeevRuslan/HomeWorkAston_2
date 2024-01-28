@@ -1,39 +1,55 @@
 package mardeev.homeworkaston_2.repository;
 
 import lombok.AllArgsConstructor;
-import mardeev.homeworkaston_2.database.MyDataBase;
+import mardeev.homeworkaston_2.config.SessionFactoryConfig;
 import mardeev.homeworkaston_2.entity.User;
+import org.hibernate.HibernateException;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.springframework.stereotype.Repository;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 @AllArgsConstructor
 public class UserRepositoryImpl implements UserRepository {
-    private MyDataBase dataBase;
+    private SessionFactoryConfig sessionFactoryConfig;
 
 
     @Override
     public Optional<User> findByName(String name) {
-        for (User user : dataBase.getUserList()) {
-            if (user.getName().equals(name)) {
-                return Optional.of(user);
-            }
+        try (Session session = sessionFactoryConfig.getSession()){
+            return Optional.ofNullable(session.get(User.class, name));
         }
-        return Optional.empty();
+        catch (HibernateException e) {
+            return Optional.empty();
+        }
     }
 
     @Override
     public boolean save(User user) {
-        return dataBase.getUserList().add(user);
+        try (Session session = sessionFactoryConfig.getSession()){
+            session.save(user);
+            return true;
+        }
+        catch (HibernateException e) {
+            return false;
+        }
     }
 
     @Override
     public boolean updateUser(String name, String passwordNew) {
         Optional<User> optionalUser = findByName(name);
-        if (optionalUser.isPresent() && dataBase.getUserList().remove(optionalUser.get())) {
-            return dataBase.getUserList().add(new User(name, passwordNew));
+        if (optionalUser.isPresent() ) {
+            try (Session session = sessionFactoryConfig.getSession()){
+                session.update(new User(name, passwordNew));
+                return true;
+            }
+            catch (HibernateException e) {
+                return false;
+            }
         }
         return false;
     }
@@ -41,6 +57,12 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public List<User> getUsers() {
-        return dataBase.getUserList();
+        try (Session session = sessionFactoryConfig.getSession()) {
+            Query<User> query = session.createQuery("from User", User.class);
+            return query.getResultList();
+        }
+        catch (HibernateException e) {
+            return new ArrayList<>(0);
+        }
     }
 }

@@ -2,6 +2,9 @@ package mardeev.homeworkaston_2.service;
 
 import lombok.AllArgsConstructor;
 import mardeev.homeworkaston_2.entity.User;
+import mardeev.homeworkaston_2.exception.InvalidName;
+import mardeev.homeworkaston_2.exception.InvalidPassword;
+import mardeev.homeworkaston_2.exception.NameIsBusy;
 import mardeev.homeworkaston_2.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,21 +17,24 @@ public class UserServiceImpl implements UserService {
     private UserRepository userRepository;
 
     @Override
-    public boolean signUp(String name, String password) {
+    public boolean signUp(String name, String password) throws NameIsBusy {
         Optional<User> user = userRepository.findByName(name);
         if (user.isPresent()) {
-            return false;
+            throw new NameIsBusy("Name " + name + "is busy");
         }
         return userRepository.save(new User(name, password));
     }
 
     @Override
-    public boolean signIn(String name, String password) {
+    public boolean signIn(String name, String password) throws InvalidName, InvalidPassword {
         Optional<User> user = userRepository.findByName(name);
-        if (user.isPresent() && password.equals(user.get().getPassword())) {
-            return true;
+        if (!user.isPresent()) {
+            throw  new InvalidName("Name " + name + "not");
         }
-        return false;
+        if (!password.equals(user.get().getPassword())) {
+            throw  new InvalidPassword("Name " + name + "invalid password");
+        }
+        return true;
     }
 
     @Override

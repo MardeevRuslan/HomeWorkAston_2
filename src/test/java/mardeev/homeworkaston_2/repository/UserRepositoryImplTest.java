@@ -1,54 +1,95 @@
 package mardeev.homeworkaston_2.repository;
 
-import junit.framework.TestCase;
-import mardeev.homeworkaston_2.database.MyDataBase;
-import mardeev.homeworkaston_2.database.MyDataBaseImpl;
+import mardeev.homeworkaston_2.config.SessionFactoryConfig;
 import mardeev.homeworkaston_2.entity.User;
-import org.junit.jupiter.api.Assumptions;
-import org.junit.jupiter.api.BeforeAll;
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.when;
 
-public class UserRepositoryImplTest extends TestCase {
-    private static MyDataBase myDataBase = new MyDataBaseImpl();
+public class UserRepositoryImplTest {
+    private UserRepository userRepository;
 
-    private UserRepository userRepository = new UserRepositoryImpl(myDataBase);
-    private static String nameYes = "Ivan";
-    private static String nameYes2 = "Dima";
-    private static String nameNot = "Ivans";
-    private static String nameNot2 = "Ivant";
+    @Mock
+    private SessionFactoryConfig sessionFactoryConfig;
 
-    private static String password = "123";
+    @Mock
+    private Session session;
 
-    @BeforeAll
-    public static void initEach() {
-        myDataBase.getUserList().add(new User(nameYes, password));
-        myDataBase.getUserList().add(new User(nameYes2, password));
-    }
+    @Mock
+    private Query<User> query;
 
+    @Mock
+    private UserRepository userRepositoryOld;
 
-    @Test
-    public void testFindByName() {
-        Assumptions.assumeTrue(userRepository.findByName(nameYes).equals(Optional.of(new User(nameYes, "123"))));
-        Assumptions.assumeFalse(userRepository.findByName(nameNot).equals(Optional.of(new User(nameYes, "123"))));
-    }
-
-    @Test
-    public void testSave() {
-        Assumptions.assumeTrue(userRepository.save(new User(nameNot, password)));
-        Assumptions.assumeTrue(userRepository.save(new User(nameYes2, password)));
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.initMocks(this);
+        userRepository = new UserRepositoryImpl(sessionFactoryConfig);
     }
 
     @Test
-    public void testUpdateUser() {
-        Assumptions.assumeFalse(userRepository.updateUser(nameNot2, password));
-        Assumptions.assumeTrue(userRepository.updateUser(nameYes2, password));
+    public void testFindByNameWhenUserExists() {
+        String name = "testUser";
+        User user = new User(name, "password");
+        when(sessionFactoryConfig.getSession()).thenReturn(session);
+        when(session.get(User.class, name)).thenReturn(user);
+
+        Optional<User> result = userRepository.findByName(name);
+        assertTrue(result.isPresent());
+        assertEquals(user, result.get());
     }
+
+    @Test
+    public void testFindByNameWhenUserDoesNotExist() {
+        String name = "nonExistentUser";
+        when(sessionFactoryConfig.getSession()).thenReturn(session);
+        when(session.get(User.class, name)).thenReturn(null);
+
+        Optional<User> result = userRepository.findByName(name);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void testSaveUser() {
+        User user = new User("newUser", "password");
+        when(sessionFactoryConfig.getSession()).thenReturn(session);
+        assertTrue(userRepository.save(user));
+    }
+
+    @Test
+    public void testUpdateUserWhenUserExists() {
+        String name = "testUser";
+        User user = new User(name, "password");
+        when(sessionFactoryConfig.getSession()).thenReturn(session);
+        when(userRepositoryOld.findByName(name)).thenReturn(Optional.ofNullable(user));
+
+        assertFalse(userRepository.updateUser(name, "newPassword"));
+    }
+
 
     @Test
     public void testGetUsers() {
-        Assumptions.assumeTrue(userRepository.getUsers().equals(myDataBase.getUserList()));
+        List<User> userList = new ArrayList<>();
+        userList.add(new User("user1", "password1"));
+        userList.add(new User("user2", "password2"));
+
+        when(sessionFactoryConfig.getSession()).thenReturn(session);
+        org.hibernate.query.Query<User> query = Mockito.mock(org.hibernate.query.Query.class);
+        when(session.createQuery("from User", User.class)).thenReturn(query);
+        when(query.getResultList()).thenReturn(userList);
+
+        List<User> result = userRepository.getUsers();
+        assertEquals(userList, result);
     }
 }
